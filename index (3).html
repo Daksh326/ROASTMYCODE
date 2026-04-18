@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RoastMyCode 🔥 — Your Code, Brutally Judged</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --border: #2a2a2a;
+    --border2: #3a3a3a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --fire: #ff4500;
+    --fire2: #ff6b35;
+    --fire3: #ffa500;
+    --green: #00ff88;
+    --cyan: #00d4ff;
+    --red: #ff2d55;
+    --yellow: #ffcc00;
+    --mono: 'Space Mono', monospace;
+    --display: 'Bebas Neue', sans-serif;
+    --body: 'DM Sans', sans-serif;
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; }
+  body { background: var(--bg); }
+
+  #root { min-height: 100vh; }
+
+  /* Scanlines overlay */
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none; z-index: 9999;
+  }
+
+  .glitch {
+    position: relative;
+    animation: glitch-skew 1s infinite linear alternate-reverse;
+  }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute; top: 0; left: 0; right: 0;
+    font-family: var(--display);
+    font-size: inherit;
+    color: inherit;
+  }
+  .glitch::before {
+    left: 2px; text-shadow: -1px 0 var(--red);
+    clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+    animation: glitch-anim 5s infinite linear alternate-reverse;
+  }
+  .glitch::after {
+    left: -2px; text-shadow: -1px 0 var(--cyan);
+    clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+    animation: glitch-anim2 5s infinite linear alternate-reverse;
+  }
+  @keyframes glitch-anim {
+    0%{clip-path:polygon(0 2%,100% 2%,100% 5%,0 5%)}
+    20%{clip-path:polygon(0 15%,100% 15%,100% 20%,0 20%)}
+    40%{clip-path:polygon(0 40%,100% 40%,100% 42%,0 42%)}
+    60%{clip-path:polygon(0 60%,100% 60%,100% 65%,0 65%)}
+    80%{clip-path:polygon(0 80%,100% 80%,100% 84%,0 84%)}
+    100%{clip-path:polygon(0 95%,100% 95%,100% 99%,0 99%)}
+  }
+  @keyframes glitch-anim2 {
+    0%{clip-path:polygon(0 25%,100% 25%,100% 30%,0 30%)}
+    20%{clip-path:polygon(0 3%,100% 3%,100% 7%,0 7%)}
+    40%{clip-path:polygon(0 55%,100% 55%,100% 60%,0 60%)}
+    60%{clip-path:polygon(0 70%,100% 70%,100% 75%,0 75%)}
+    80%{clip-path:polygon(0 50%,100% 50%,100% 52%,0 52%)}
+    100%{clip-path:polygon(0 10%,100% 10%,100% 15%,0 15%)}
+  }
+  @keyframes glitch-skew {
+    0%{transform:skew(0deg)}
+    10%{transform:skew(0.3deg)}
+    20%{transform:skew(-0.3deg)}
+    100%{transform:skew(0deg)}
+  }
+
+  @keyframes flame {
+    0%,100%{text-shadow:0 0 10px #ff4500,0 0 20px #ff4500,0 0 40px #ff6b35}
+    50%{text-shadow:0 0 15px #ffa500,0 0 30px #ff4500,0 0 60px #ff6b35}
+  }
+
+  @keyframes fadeUp {
+    from{opacity:0;transform:translateY(20px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+
+  @keyframes pulse-border {
+    0%,100%{border-color: var(--fire)}
+    50%{border-color: var(--fire3)}
+  }
+
+  @keyframes typewriter {
+    from{width:0}to{width:100%}
+  }
+
+  @keyframes blink {
+    0%,50%{opacity:1}51%,100%{opacity:0}
+  }
+
+  @keyframes spin {
+    from{transform:rotate(0deg)}to{transform:rotate(360deg)}
+  }
+
+  @keyframes shake {
+    0%,100%{transform:translateX(0)}
+    10%{transform:translateX(-4px)}
+    20%{transform:translateX(4px)}
+    30%{transform:translateX(-3px)}
+    40%{transform:translateX(3px)}
+    50%{transform:translateX(-2px)}
+    60%{transform:translateX(2px)}
+  }
+
+  @keyframes score-reveal {
+    0%{transform:scale(0) rotate(-10deg);opacity:0}
+    60%{transform:scale(1.2) rotate(2deg)}
+    100%{transform:scale(1) rotate(0deg);opacity:1}
+  }
+
+  .app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    animation: fadeUp 0.6s ease;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 50px 0 30px;
+    position: relative;
+  }
+  .header-badge {
+    display: inline-block;
+    background: var(--fire);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    animation: fadeUp 0.4s ease;
+  }
+  .header h1 {
+    font-family: var(--display);
+    font-size: clamp(60px, 12vw, 110px);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--text);
+    animation: flame 2s ease-in-out infinite;
+    margin-bottom: 12px;
+  }
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .fire-emoji { display: inline; font-style: normal; animation: none; }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    margin: 30px 0 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    margin-bottom: -1px;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active {
+    color: var(--fire);
+    border-bottom-color: var(--fire);
+  }
+
+  /* EDITOR SECTION */
+  .editor-section { padding: 30px 0; }
+
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    padding: 10px 16px;
+    border-radius: 8px 8px 0 0;
+  }
+  .editor-dots { display: flex; gap: 6px; }
+  .editor-dot {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .editor-dot.red { background: #ff5f57; }
+  .editor-dot.yellow { background: #febc2e; }
+  .editor-dot.green { background: #28c840; }
+  .editor-lang {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  .code-textarea {
+    width: 100%;
+    min-height: 250px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    color: var(--green);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    padding: 20px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    tab-size: 2;
+  }
+  .code-textarea:focus { border-color: var(--fire); }
+  .code-textarea::placeholder { color: #333; }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .lang-select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .lang-select:focus { border-color: var(--fire); }
+
+  .roast-btn {
+    flex: 1;
+    background: var(--fire);
+    border: none;
+    color: #000;
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 2px;
+    padding: 12px 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    min-width: 180px;
+  }
+  .roast-btn::before {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.4s;
+  }
+  .roast-btn:hover::before { left: 100%; }
+  .roast-btn:hover { background: var(--fire2); transform: translateY(-1px); }
+  .roast-btn:active { transform: translateY(0) scale(0.99); animation: shake 0.3s; }
+  .roast-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; }
+
+  .char-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* LOADING */
+  .loading-container {
+    text-align: center;
+    padding: 60px 20px;
+    animation: fadeUp 0.4s ease;
+  }
+  .fire-loader {
+    font-size: 60px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+  .loading-text {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--fire);
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+  .loading-sub {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.4s infinite;
+  }
+  @keyframes dots {
+    0%{content:''}33%{content:'.'}66%{content:'..'}100%{content:'...'}
+  }
+
+  /* ROAST RESULT */
+  .roast-result {
+    animation: fadeUp 0.5s ease;
+    margin-top: 20px;
+  }
+
+  .score-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--fire);
+    padding: 20px 24px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .score-circle {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    border: 3px solid;
+    flex-shrink: 0;
+    animation: score-reveal 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s both;
+  }
+  .score-circle.terrible { border-color: var(--red); }
+  .score-circle.bad { border-color: var(--fire); }
+  .score-circle.meh { border-color: var(--yellow); }
+  .score-circle.ok { border-color: var(--green); }
+  .score-number {
+    font-family: var(--display);
+    font-size: 32px;
+    line-height: 1;
+    color: var(--text);
+  }
+  .score-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .score-meta { flex: 1; min-width: 200px; }
+  .score-verdict {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 1px;
+    color: var(--fire);
+    margin-bottom: 4px;
+  }
+  .score-lang {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .score-tags {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .score-tag {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .score-tag.bad { border-color: var(--red); color: var(--red); }
+
+  /* ROAST CARD */
+  .roast-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .roast-card:hover { border-color: var(--border2); }
+
+  .roast-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .roast-card-icon {
+    font-size: 18px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .roast-card-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  .roast-card-body { padding: 20px; }
+
+  /* ROAST TEXT */
+  .roast-text {
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .roast-text.comedian {
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--fire2);
+    font-style: italic;
+    border-left: 3px solid var(--fire);
+    padding-left: 16px;
+  }
+
+  /* FIXES LIST */
+  .fix-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .fix-item:last-child { border-bottom: none; }
+  .fix-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fire);
+    width: 20px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .fix-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .fix-text strong {
+    color: var(--yellow);
+    font-weight: 600;
+  }
+
+  /* CODE SNIPPET */
+  .code-snippet {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--green);
+    overflow-x: auto;
+    margin-top: 12px;
+    white-space: pre;
+  }
+
+  /* SHARE CARD */
+  .share-section {
+    margin-top: 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .share-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .share-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .share-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 9px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .share-btn:hover { border-color: var(--fire); color: var(--fire); }
+
+  .add-to-lb-btn {
+    background: var(--fire);
+    border: none;
+    color: #000;
+    font-family: var(--display);
+    font-size: 16px;
+    letter-spacing: 1px;
+    padding: 9px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .add-to-lb-btn:hover { background: var(--fire2); }
+
+  /* LEADERBOARD */
+  .lb-section { padding: 30px 0; }
+  .lb-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .lb-title {
+    font-family: var(--display);
+    font-size: 36px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+  .lb-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .lb-empty {
+    text-align: center;
+    padding: 60px 20px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+  .lb-empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .lb-empty-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .lb-item {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .lb-item:hover { border-color: var(--fire); transform: translateX(4px); }
+  .lb-item.rank-1 { border-left: 3px solid var(--yellow); }
+  .lb-item.rank-2 { border-left: 3px solid #c0c0c0; }
+  .lb-item.rank-3 { border-left: 3px solid #cd7f32; }
+
+  .lb-rank {
+    font-family: var(--display);
+    font-size: 24px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .lb-rank.rank-1 { color: var(--yellow); }
+  .lb-rank.rank-2 { color: #c0c0c0; }
+  .lb-rank.rank-3 { color: #cd7f32; }
+
+  .lb-info { min-width: 0; }
+  .lb-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lb-snippet {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lb-score {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .lb-score-num {
+    font-family: var(--display);
+    font-size: 30px;
+    line-height: 1;
+  }
+  .lb-score-num.terrible { color: var(--red); }
+  .lb-score-num.bad { color: var(--fire); }
+  .lb-score-num.meh { color: var(--yellow); }
+  .lb-score-num.ok { color: var(--green); }
+  .lb-score-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* HOW IT WORKS */
+  .how-section { padding: 30px 0; }
+  .how-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+  }
+  .how-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .how-card:hover { border-color: var(--fire); }
+  .how-step {
+    font-family: var(--display);
+    font-size: 48px;
+    color: var(--fire);
+    line-height: 1;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .how-card-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .how-card-desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    background: var(--bg3);
+    border: 1px solid var(--fire);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    z-index: 1000;
+    animation: fadeUp 0.3s ease;
+    max-width: 300px;
+  }
+
+  /* ERROR */
+  .error-card {
+    background: rgba(255,45,85,0.05);
+    border: 1px solid rgba(255,45,85,0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 16px;
+    animation: fadeUp 0.3s ease;
+  }
+  .error-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .error-msg { font-size: 14px; color: var(--muted); }
+
+  /* SHAREABLE CARD PREVIEW */
+  .share-card-preview {
+    background: #0a0a0a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .share-card-preview::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--fire), var(--fire3), var(--fire2));
+  }
+  .share-card-brand {
+    font-family: var(--display);
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--fire);
+    margin-bottom: 16px;
+  }
+  .share-card-score-big {
+    font-family: var(--display);
+    font-size: 72px;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .share-card-verdict-big {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--fire);
+    margin-bottom: 16px;
+  }
+  .share-card-roast-snippet {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.6;
+    border-left: 2px solid var(--fire);
+    padding-left: 12px;
+  }
+  .share-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .share-card-url {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--border2);
+  }
+  .share-card-lang {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--border2);
+    background: var(--bg3);
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* SECTION HEADING */
+  .section-heading {
+    font-family: var(--display);
+    font-size: 32px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .section-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* TICKER */
+  .ticker-wrap {
+    overflow: hidden;
+    white-space: nowrap;
+    background: var(--fire);
+    padding: 8px 0;
+    margin-bottom: 10px;
+  }
+  .ticker {
+    display: inline-block;
+    animation: ticker-scroll 20s linear infinite;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: #000;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  @keyframes ticker-scroll {
+    0%{transform:translateX(0)}
+    100%{transform:translateX(-50%)}
+  }
+
+  /* MOBILE */
+  @media(max-width:600px) {
+    .header h1 { font-size: 60px; }
+    .controls-row { flex-direction: column; }
+    .roast-btn { width: 100%; }
+    .lb-item { grid-template-columns: 30px 1fr auto; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const SAMPLE_CODE = {
+  python: `def find_user(users, id):
+    for i in range(len(users)):
+        for j in range(len(users)):
+            if users[i]['id'] == id:
+                return users[i]
+    return None
+
+password = "admin123"
+db_url = "postgres://admin:password123@localhost/prod"
+
+result = find_user(users, id)
+if result != None:
+    print("Found: " + str(result))`,
+  javascript: `var x = 1
+var y = 2
+var z = x + y
+console.log("result is: " + z)
+
+function doStuff(a,b,c,d,e,f,g) {
+  if(a==true) {
+    if(b==true) {
+      if(c==true) {
+        return a+b+c+d+e+f+g
+      }
+    }
+  }
+}`,
+  java: `public class Main {
+    public static void main(String[] args) {
+        int[] arr = new int[10];
+        for(int i=0; i<=10; i++) {
+            arr[i] = i * 2;
+        }
+        String result = "";
+        for(int i=0; i<arr.length; i++) {
+            result = result + arr[i] + ",";
+        }
+        System.out.println(result);
+    }
+}`,
+};
+
+const VERDICTS = {
+  terrible: ['CATASTROPHIC', 'UNHINGED', 'CRIME SCENE', 'DUMPSTER FIRE', 'HELP ME'],
+  bad: ['ROUGH', 'YIKES', 'NEEDS WORK', 'OH NO', 'SERIOUSLY?'],
+  meh: ['AVERAGE', 'MEDIOCRE', 'FINE I GUESS', 'COULD BE WORSE'],
+  ok: ['ACCEPTABLE', 'NOT BAD', 'DECENT', 'PASSABLE'],
+};
+
+function getScoreClass(score) {
+  if (score <= 25) return 'terrible';
+  if (score <= 50) return 'bad';
+  if (score <= 75) return 'meh';
+  return 'ok';
+}
+
+function getRandomVerdict(scoreClass) {
+  const arr = VERDICTS[scoreClass];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+const TICKER_TEXT = '🔥 ROAST MY CODE · YOUR CODE IS TERRIBLE · WE WILL JUDGE YOU · NO MERCY · DEPLOY THE SHAME · 🔥 ROAST MY CODE · YOUR CODE IS TERRIBLE · WE WILL JUDGE YOU · NO MERCY · DEPLOY THE SHAME · ';
+
+function App() {
+  const [tab, setTab] = useState('roast');
+  const [code, setCode] = useState('');
+  const [lang, setLang] = useState('python');
+  const [loading, setLoading] = useState(false);
+  const [roastData, setRoastData] = useState(null);
+  const [error, setError] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [toast, setToast] = useState(null);
+  const [showShareCard, setShowShareCard] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('roastmycode_lb');
+      if (saved) setLeaderboard(JSON.parse(saved));
+    } catch(e) {}
+  }, []);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const saveLeaderboard = (newLb) => {
+    setLeaderboard(newLb);
+    try { localStorage.setItem('roastmycode_lb', JSON.stringify(newLb)); } catch(e) {}
+  };
+
+  const handleRoast = async () => {
+    if (!code.trim()) { showToast('Paste some code first!'); return; }
+    setLoading(true);
+    setRoastData(null);
+    setError(null);
+    setShowShareCard(false);
+
+    const systemPrompt = `You are a brutally funny, savage code roaster — think Gordon Ramsay meets a senior engineer. You roast code like a stand-up comedian while ALSO being genuinely helpful. You find every flaw: bad naming, security holes, performance issues, anti-patterns, spaghetti logic.
+
+ALWAYS respond with ONLY valid JSON, no markdown, no backticks. Format:
+{
+  "score": <number 1-100 where 1=apocalyptic disaster, 100=perfect>,
+  "roast": "<2-3 sentences of savage comedian roast. Be FUNNY, brutal, creative. Use metaphors. Reference the specific bad code.>",
+  "issues": [
+    {"title": "<issue name>", "description": "<what's wrong and why it's bad>", "severity": "critical|warning|info"},
+    ...
+  ],
+  "fixes": [
+    {"what": "<specific thing to fix>", "how": "<concrete suggestion>"},
+    ...
+  ],
+  "redeeming": "<one thing they did right, or a backhanded compliment if nothing is good>",
+  "fixed_snippet": "<a short improved version of the most broken part, or empty string if too much to fix>"
+}`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: `Language: ${lang}\n\nCode to roast:\n\`\`\`${lang}\n${code}\n\`\`\`` }]
+        })
+      });
+      const data = await resp.json();
+      const raw = data.content?.[0]?.text || '';
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      const scoreClass = getScoreClass(parsed.score);
+      setRoastData({ ...parsed, scoreClass, verdict: getRandomVerdict(scoreClass) });
+    } catch(e) {
+      setError('The roaster crashed. Even our AI couldn\'t handle your code. ' + e.message);
+    }
+    setLoading(false);
+  };
+
+  const addToLeaderboard = () => {
+    if (!roastData) return;
+    const entry = {
+      id: Date.now(),
+      score: roastData.score,
+      scoreClass: roastData.scoreClass,
+      verdict: roastData.verdict,
+      lang,
+      snippet: code.slice(0, 80).replace(/\n/g, ' '),
+      roast: roastData.roast,
+      timestamp: new Date().toLocaleDateString(),
+    };
+    const newLb = [entry, ...leaderboard].sort((a,b) => a.score - b.score).slice(0, 20);
+    saveLeaderboard(newLb);
+    showToast('🔥 Added to the Hall of Shame!');
+    setTab('leaderboard');
+  };
+
+  const copyRoast = () => {
+    if (!roastData) return;
+    const text = `🔥 ROASTMYCODE REPORT\n\nScore: ${roastData.score}/100 — ${roastData.verdict}\n\n"${roastData.roast}"\n\nRoast your code at RoastMyCode`;
+    navigator.clipboard.writeText(text).then(() => showToast('Roast copied to clipboard!'));
+  };
+
+  const handleSample = () => {
+    setCode(SAMPLE_CODE[lang] || SAMPLE_CODE.python);
+  };
+
+  return (
+    <div className="app">
+      <div className="ticker-wrap">
+        <span className="ticker">{TICKER_TEXT}{TICKER_TEXT}</span>
+      </div>
+
+      <div className="header">
+        <div className="header-badge">⚡ AI-POWERED CODE SHAMING</div>
+        <h1 className="glitch" data-text="ROASTMYCODE">ROASTMYCODE</h1>
+        <p className="header-sub">paste code → get destroyed → fix it → repeat</p>
+      </div>
+
+      <div className="nav-tabs">
+        {['roast','leaderboard','howto'].map(t => (
+          <button key={t} className={`nav-tab ${tab===t?'active':''}`} onClick={()=>setTab(t)}>
+            {t==='roast'?'🔥 Roast It':t==='leaderboard'?'💀 Hall of Shame':'❓ How It Works'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'roast' && (
+        <div className="editor-section">
+          <div className="editor-header">
+            <div className="editor-dots">
+              <div className="editor-dot red" />
+              <div className="editor-dot yellow" />
+              <div className="editor-dot green" />
+            </div>
+            <div className="editor-lang">{lang.toUpperCase()} · READY FOR JUDGMENT</div>
+          </div>
+          <textarea
+            className="code-textarea"
+            placeholder={`# Paste your ${lang} code here...\n# The more terrible, the better.\n# We don't judge. Well, actually we do. Brutally.`}
+            value={code}
+            onChange={e=>setCode(e.target.value)}
+            spellCheck={false}
+          />
+          <div className="controls-row">
+            <select className="lang-select" value={lang} onChange={e=>{setLang(e.target.value);setCode('');}}>
+              <option value="python">Python</option>
+              <option value="javascript">JavaScript</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
+              <option value="c">C</option>
+              <option value="typescript">TypeScript</option>
+              <option value="go">Go</option>
+              <option value="rust">Rust</option>
+              <option value="php">PHP</option>
+              <option value="ruby">Ruby</option>
+            </select>
+            <button className="share-btn" onClick={handleSample}>Load Sample 💀</button>
+            <button className="roast-btn" onClick={handleRoast} disabled={loading || !code.trim()}>
+              {loading ? 'ROASTING...' : '🔥 ROAST IT'}
+            </button>
+            <span className="char-count">{code.length} chars</span>
+          </div>
+
+          {loading && (
+            <div className="loading-container">
+              <div className="fire-loader">🔥</div>
+              <div className="loading-text">ANALYZING YOUR CRIMES<span className="loading-dots" /></div>
+              <div className="loading-sub">The roaster is finding every single flaw...</div>
+            </div>
+          )}
+
+          {error && (
+            <div className="error-card">
+              <div className="error-title">⚠ ROASTER MALFUNCTION</div>
+              <div className="error-msg">{error}</div>
+            </div>
+          )}
+
+          {roastData && !loading && (
+            <div className="roast-result">
+              {/* Score Banner */}
+              <div className="score-banner">
+                <div className={`score-circle ${roastData.scoreClass}`}>
+                  <span className="score-number">{roastData.score}</span>
+                  <span className="score-label">/100</span>
+                </div>
+                <div className="score-meta">
+                  <div className="score-verdict">{roastData.verdict}</div>
+                  <div className="score-lang">{lang.toUpperCase()} · {new Date().toLocaleDateString()}</div>
+                  <div className="score-tags">
+                    {roastData.issues?.slice(0,3).map((issue,i)=>(
+                      <span key={i} className={`score-tag ${issue.severity==='critical'?'bad':''}`}>
+                        {issue.severity==='critical'?'🔴':issue.severity==='warning'?'🟡':'🔵'} {issue.title}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Comedian Roast */}
+              <div className="roast-card">
+                <div className="roast-card-header">
+                  <div className="roast-card-icon">🎤</div>
+                  <div className="roast-card-title">The Roast</div>
+                </div>
+                <div className="roast-card-body">
+                  <div className="roast-text comedian">{roastData.roast}</div>
+                </div>
+              </div>
+
+              {/* Issues */}
+              {roastData.issues?.length > 0 && (
+                <div className="roast-card">
+                  <div className="roast-card-header">
+                    <div className="roast-card-icon">🐛</div>
+                    <div className="roast-card-title">Issues Found ({roastData.issues.length})</div>
+                  </div>
+                  <div className="roast-card-body">
+                    {roastData.issues.map((issue, i) => (
+                      <div key={i} className="fix-item">
+                        <div className="fix-num">{issue.severity==='critical'?'🔴':issue.severity==='warning'?'🟡':'🔵'}</div>
+                        <div className="fix-text">
+                          <strong>{issue.title}</strong><br />{issue.description}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Fixes */}
+              {roastData.fixes?.length > 0 && (
+                <div className="roast-card">
+                  <div className="roast-card-header">
+                    <div className="roast-card-icon">🔧</div>
+                    <div className="roast-card-title">How To Fix Your Mess</div>
+                  </div>
+                  <div className="roast-card-body">
+                    {roastData.fixes.map((fix, i) => (
+                      <div key={i} className="fix-item">
+                        <div className="fix-num">{i+1}.</div>
+                        <div className="fix-text">
+                          <strong>{fix.what}</strong><br />{fix.how}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Fixed Snippet */}
+              {roastData.fixed_snippet && (
+                <div className="roast-card">
+                  <div className="roast-card-header">
+                    <div className="roast-card-icon">✨</div>
+                    <div className="roast-card-title">What It Should Look Like</div>
+                  </div>
+                  <div className="roast-card-body">
+                    <div className="code-snippet">{roastData.fixed_snippet}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Redeeming */}
+              {roastData.redeeming && (
+                <div className="roast-card">
+                  <div className="roast-card-header">
+                    <div className="roast-card-icon">🌟</div>
+                    <div className="roast-card-title">One Good Thing (Barely)</div>
+                  </div>
+                  <div className="roast-card-body">
+                    <div className="roast-text" style={{color:'var(--green)',fontStyle:'italic'}}>{roastData.redeeming}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Share / Leaderboard */}
+              <div className="share-section">
+                <div className="share-title">📤 Deploy The Shame</div>
+                <div className="share-buttons">
+                  <button className="share-btn" onClick={copyRoast}>📋 Copy Roast</button>
+                  <button className="share-btn" onClick={()=>setShowShareCard(s=>!s)}>🎴 Share Card</button>
+                  <button className="add-to-lb-btn" onClick={addToLeaderboard}>💀 Add To Hall of Shame</button>
+                </div>
+
+                {showShareCard && (
+                  <div className="share-card-preview">
+                    <div className="share-card-brand">🔥 ROASTMYCODE</div>
+                    <div className="share-card-score-big">{roastData.score}</div>
+                    <div className="share-card-verdict-big">{roastData.verdict}</div>
+                    <div className="share-card-roast-snippet">"{roastData.roast?.slice(0,150)}{roastData.roast?.length>150?'...':''}"</div>
+                    <div className="share-card-footer">
+                      <span className="share-card-url">roastmycode.vercel.app</span>
+                      <span className="share-card-lang">{lang.toUpperCase()}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === 'leaderboard' && (
+        <div className="lb-section">
+          <div className="lb-header">
+            <div>
+              <div className="lb-title">💀 HALL OF SHAME</div>
+              <div className="lb-count">{leaderboard.length} submissions · sorted by score (lowest first)</div>
+            </div>
+          </div>
+
+          {leaderboard.length === 0 ? (
+            <div className="lb-empty">
+              <div className="lb-empty-icon">🦗</div>
+              <div className="lb-empty-text">No entries yet. Go roast some code and add it here.</div>
+            </div>
+          ) : (
+            leaderboard.map((entry, i) => (
+              <div key={entry.id} className={`lb-item rank-${i+1}`} onClick={()=>{setTab('roast');showToast('Showing top roast — paste your own code to get roasted!');}}>
+                <div className={`lb-rank ${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}`}>
+                  {i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
+                </div>
+                <div className="lb-info">
+                  <div className="lb-name">"{entry.verdict}" — {entry.timestamp}</div>
+                  <div className="lb-snippet">{entry.lang.toUpperCase()} · {entry.snippet}...</div>
+                </div>
+                <div className="lb-score">
+                  <div className={`lb-score-num ${entry.scoreClass}`}>{entry.score}</div>
+                  <div className="lb-score-label">/100</div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {tab === 'howto' && (
+        <div className="how-section">
+          <div className="section-heading">HOW IT WORKS</div>
+          <div className="section-sub">THREE STEPS TO HUMILIATION</div>
+          <div className="how-grid">
+            {[
+              {step:'01',title:'Paste Your Code',desc:'Drop any code snippet you want judged. The worse, the better. We accept spaghetti, war crimes, and legacy PHP.'},
+              {step:'02',title:'Get Destroyed',desc:'Our AI roasts every flaw — bad naming, O(n³) loops, hardcoded passwords, deeply nested if-hell. Nothing escapes.'},
+              {step:'03',title:'Actually Fix It',desc:'Beyond the laughs, you get real fixes: specific issues, concrete suggestions, and improved code snippets.'},
+              {step:'04',title:'Share The Shame',desc:'Generate a shareable roast card, copy your score, or add your worst code to the global Hall of Shame leaderboard.'},
+            ].map(c=>(
+              <div key={c.step} className="how-card">
+                <div className="how-step">{c.step}</div>
+                <div className="how-card-title">{c.title}</div>
+                <div className="how-card-desc">{c.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <hr className="divider" />
+          <div className="section-heading">SCORING</div>
+          <div className="section-sub">WHAT YOUR SCORE MEANS</div>
+          <div className="how-grid">
+            {[
+              {range:'1–25',label:'💀 CATASTROPHIC',desc:'Security vulnerabilities, infinite loops, hardcoded credentials. This code is a crime.',color:'var(--red)'},
+              {range:'26–50',label:'🔥 ROUGH',desc:'Major anti-patterns, poor structure, multiple critical issues. Back to basics.',color:'var(--fire)'},
+              {range:'51–75',label:'⚠️ MEH',desc:'Works but has notable smells. Needs refactoring. A senior dev would wince.',color:'var(--yellow)'},
+              {range:'76–100',label:'✅ ACCEPTABLE',desc:'Decent code. Maybe a few style issues. Gets the job done without making us cry.',color:'var(--green)'},
+            ].map(s=>(
+              <div key={s.range} className="how-card" style={{borderLeft:`3px solid ${s.color}`}}>
+                <div style={{fontFamily:'var(--display)',fontSize:'28px',color:s.color,marginBottom:'8px'}}>{s.range}</div>
+                <div className="how-card-title">{s.label}</div>
+                <div className="how-card-desc">{s.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
