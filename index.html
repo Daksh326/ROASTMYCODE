@@ -1106,20 +1106,31 @@ ALWAYS respond with ONLY valid JSON, no markdown, no backticks. Format:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
           system: systemPrompt,
           messages: [{ role: 'user', content: `Language: ${lang}\n\nCode to roast:\n\`\`\`${lang}\n${code}\n\`\`\`` }]
         })
       });
       const data = await resp.json();
+      // Surface API-level errors clearly
+      if (!resp.ok || data.error) {
+        const msg = data.error || (data.raw?.error?.message) || `API error ${resp.status}`;
+        setError('API Error: ' + msg);
+        setLoading(false);
+        return;
+      }
       const raw = data.content?.[0]?.text || '';
-      const clean = raw.replace(/```json|```/g, '').trim();
+      if (!raw) {
+        setError('Empty response from API. Check your API key and Vercel environment variables.');
+        setLoading(false);
+        return;
+      }
+      const clean = raw.replace(/```json[\s\S]*?```|```/g, '').trim();
       const parsed = JSON.parse(clean);
       const scoreClass = getScoreClass(parsed.score);
       setRoastData({ ...parsed, scoreClass, verdict: getRandomVerdict(scoreClass) });
     } catch(e) {
-      setError('The roaster crashed. Even our AI couldn\'t handle your code. ' + e.message);
+      setError('Roaster crashed: ' + e.message + '. Check your Vercel function logs for details.');
     }
     setLoading(false);
   };
