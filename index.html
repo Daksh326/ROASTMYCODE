@@ -9,6 +9,28 @@
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="module" id="firebase-init">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // 🔥 REPLACE THESE with your Firebase project config
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.__firebaseDB = db;
+  window.__firebaseHelpers = { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp };
+  window.__firebaseReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -842,7 +864,64 @@
     100%{transform:translateX(-50%)}
   }
 
-  /* MOBILE */
+  .nick-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .nick-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+    flex: 1;
+    max-width: 240px;
+  }
+  .nick-input:focus { border-color: var(--fire); }
+  .nick-input::placeholder { color: #444; }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,255,136,0.08);
+    border: 1px solid rgba(0,255,136,0.25);
+    color: var(--green);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    animation: live-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes live-pulse {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:0.4;transform:scale(0.7)}
+  }
+
+  .lb-timestamp {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #444;
+    margin-top: 2px;
+  }
+  .lb-nick {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fire2);
+    font-weight: 700;
+  }
   @media(max-width:600px) {
     .header h1 { font-size: 60px; }
     .controls-row { flex-direction: column; }
@@ -930,12 +1009,48 @@ function App() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [toast, setToast] = useState(null);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [nickname, setNickname] = useState('');
+  const [fbReady, setFbReady] = useState(false);
+  const [lbLoading, setLbLoading] = useState(true);
 
+  // Wait for Firebase to be ready, then subscribe to live leaderboard
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('roastmycode_lb');
-      if (saved) setLeaderboard(JSON.parse(saved));
-    } catch(e) {}
+    const init = () => {
+      setFbReady(true);
+      const db = window.__firebaseDB;
+      const { collection, query, orderBy, limit, onSnapshot } = window.__firebaseHelpers;
+      const q = query(collection(db, 'roasts'), orderBy('score', 'asc'), limit(20));
+      const unsub = onSnapshot(q, (snap) => {
+        const entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setLeaderboard(entries);
+        setLbLoading(false);
+      }, () => {
+        // Firebase not configured yet — fall back to localStorage
+        setLbLoading(false);
+        try {
+          const saved = localStorage.getItem('roastmycode_lb');
+          if (saved) setLeaderboard(JSON.parse(saved));
+        } catch(e) {}
+      });
+      return unsub;
+    };
+
+    let unsub;
+    if (window.__firebaseReady) {
+      unsub = init();
+    } else {
+      window.addEventListener('firebase-ready', () => { unsub = init(); }, { once: true });
+      // Fallback if Firebase never loads
+      const timer = setTimeout(() => {
+        setLbLoading(false);
+        try {
+          const saved = localStorage.getItem('roastmycode_lb');
+          if (saved) setLeaderboard(JSON.parse(saved));
+        } catch(e) {}
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    return () => unsub?.();
   }, []);
 
   const showToast = (msg) => {
@@ -943,9 +1058,22 @@ function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const saveLeaderboard = (newLb) => {
+  const saveToFirebase = async (entry) => {
+    try {
+      if (window.__firebaseDB) {
+        const { collection, addDoc, serverTimestamp } = window.__firebaseHelpers;
+        await addDoc(collection(window.__firebaseDB, 'roasts'), {
+          ...entry,
+          timestamp: serverTimestamp(),
+        });
+        return true;
+      }
+    } catch(e) {}
+    // Fallback to localStorage
+    const newLb = [entry, ...leaderboard].sort((a,b) => a.score - b.score).slice(0, 20);
     setLeaderboard(newLb);
     try { localStorage.setItem('roastmycode_lb', JSON.stringify(newLb)); } catch(e) {}
+    return false;
   };
 
   const handleRoast = async () => {
@@ -974,7 +1102,7 @@ ALWAYS respond with ONLY valid JSON, no markdown, no backticks. Format:
 }`;
 
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      const resp = await fetch('/api/roast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -996,21 +1124,20 @@ ALWAYS respond with ONLY valid JSON, no markdown, no backticks. Format:
     setLoading(false);
   };
 
-  const addToLeaderboard = () => {
+  const addToLeaderboard = async () => {
     if (!roastData) return;
     const entry = {
-      id: Date.now(),
       score: roastData.score,
       scoreClass: roastData.scoreClass,
       verdict: roastData.verdict,
       lang,
+      nick: nickname.trim() || 'Anonymous Dev',
       snippet: code.slice(0, 80).replace(/\n/g, ' '),
       roast: roastData.roast,
-      timestamp: new Date().toLocaleDateString(),
+      dateStr: new Date().toLocaleDateString(),
     };
-    const newLb = [entry, ...leaderboard].sort((a,b) => a.score - b.score).slice(0, 20);
-    saveLeaderboard(newLb);
-    showToast('🔥 Added to the Hall of Shame!');
+    const wentToFirebase = await saveToFirebase(entry);
+    showToast(wentToFirebase ? '🔥 Shame deployed globally! Everyone can see this.' : '💀 Added to local Hall of Shame!');
     setTab('leaderboard');
   };
 
@@ -1202,6 +1329,16 @@ ALWAYS respond with ONLY valid JSON, no markdown, no backticks. Format:
                   <button className="share-btn" onClick={()=>setShowShareCard(s=>!s)}>🎴 Share Card</button>
                   <button className="add-to-lb-btn" onClick={addToLeaderboard}>💀 Add To Hall of Shame</button>
                 </div>
+                <div className="nick-row">
+                  <input
+                    className="nick-input"
+                    placeholder="Your nickname (e.g. 10x_dev_lol)"
+                    value={nickname}
+                    onChange={e=>setNickname(e.target.value)}
+                    maxLength={24}
+                  />
+                  <span style={{fontFamily:'var(--mono)',fontSize:'11px',color:'var(--muted)'}}>signs your entry on the global board</span>
+                </div>
 
                 {showShareCard && (
                   <div className="share-card-preview">
@@ -1226,24 +1363,37 @@ ALWAYS respond with ONLY valid JSON, no markdown, no backticks. Format:
           <div className="lb-header">
             <div>
               <div className="lb-title">💀 HALL OF SHAME</div>
-              <div className="lb-count">{leaderboard.length} submissions · sorted by score (lowest first)</div>
+              <div className="lb-count">{leaderboard.length} submissions · sorted by score (lowest = worst)</div>
+            </div>
+            <div className="live-badge">
+              <div className="live-dot" />
+              {fbReady ? 'LIVE · GLOBAL' : 'LOCAL'}
             </div>
           </div>
 
-          {leaderboard.length === 0 ? (
+          {lbLoading ? (
+            <div className="lb-empty">
+              <div className="lb-empty-icon" style={{animation:'spin 1s linear infinite',display:'inline-block'}}>🔥</div>
+              <div className="lb-empty-text" style={{marginTop:'12px'}}>Loading global shame...</div>
+            </div>
+          ) : leaderboard.length === 0 ? (
             <div className="lb-empty">
               <div className="lb-empty-icon">🦗</div>
               <div className="lb-empty-text">No entries yet. Go roast some code and add it here.</div>
             </div>
           ) : (
             leaderboard.map((entry, i) => (
-              <div key={entry.id} className={`lb-item rank-${i+1}`} onClick={()=>{setTab('roast');showToast('Showing top roast — paste your own code to get roasted!');}}>
+              <div key={entry.id} className={`lb-item rank-${i+1}`}>
                 <div className={`lb-rank ${i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':''}`}>
                   {i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}
                 </div>
                 <div className="lb-info">
-                  <div className="lb-name">"{entry.verdict}" — {entry.timestamp}</div>
-                  <div className="lb-snippet">{entry.lang.toUpperCase()} · {entry.snippet}...</div>
+                  <div className="lb-name">
+                    <span className="lb-nick">{entry.nick || 'Anonymous Dev'}</span>
+                    {' — '}{entry.verdict}
+                  </div>
+                  <div className="lb-snippet">{entry.lang?.toUpperCase()} · {entry.snippet}...</div>
+                  <div className="lb-timestamp">{entry.dateStr || 'just now'}</div>
                 </div>
                 <div className="lb-score">
                   <div className={`lb-score-num ${entry.scoreClass}`}>{entry.score}</div>
